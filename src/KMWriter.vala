@@ -2,13 +2,15 @@ public class KMWriter : Gtk.Application {
     private Gtk.SourceView source_view;
     private Gtk.SourceBuffer source_buffer;
     private Regex is_link;
-    private TimedMutex scheduler;
+    private TimedMutex grammar_timer;
     private const int REDRAW_DELAY_IN_MS = 250;
     private Gtk.TextTag markdown_link;
     private Gtk.TextTag markdown_url;
+    private Gtk.TextTag grammar_error;
 
     protected override void activate () {
         // Grab application Window
+        grammar_timer = new TimedMutex ();
         var window = new Gtk.ApplicationWindow (this);
         window.set_title ("1.6km Writer");
         window.set_default_size (600, 320);
@@ -42,11 +44,110 @@ public class KMWriter : Gtk.Application {
         markdown_url.invisible = true;
         markdown_url.invisible_set = true;
 
+        // Grammar Errors
+        grammar_error = source_buffer.create_tag ("grammar-error");
+        grammar_error.background = "#00a367";
+        grammar_error.background_set = true;
+        grammar_error.foreground = "#eeeeee";
+        grammar_error.foreground_set = true;
+
         source_buffer.notify["cursor-position"].connect (find_links);
+        source_buffer.changed.connect (check_grammar);
 
         // Populate the Window
         window.add (scroll_box);
         window.show_all ();
+    }
+
+    public string strip_markdown (string sentence) {
+        string result = sentence;
+        try {
+            result = is_link.replace_eval (
+                result,
+                (ssize_t) result.length,
+                0,
+                RegexMatchFlags.NOTEMPTY,
+                (match_info, result) =>
+                {
+                    var title = match_info.fetch (1);
+                    result.append (title);
+                    return false;
+                });
+
+            result = result.replace ("*", "");
+            result = result.replace ("[", "");
+            result = result.replace ("]", "");
+            result = result.replace ("_", "");
+            while (result.has_prefix ("\n") || result.has_prefix ("#") || result.has_prefix (">") || result.has_prefix (" ")) {
+                result = result.substring (1);
+            }
+        } catch (Error e) {
+            warning ("Could not strip markdown: %s", e.message);
+        }
+
+        return result;
+    }
+
+    public void check_grammar () {
+        if (!grammar_timer.can_do_action ()) {
+            return;
+        }
+        Gtk.TextIter buffer_start, buffer_end, cursor_location;
+        source_buffer.get_bounds (out buffer_start, out buffer_end);
+        source_buffer.remove_tag (grammar_error, buffer_start, buffer_end);
+        var cursor = source_buffer.get_insert ();
+        source_buffer.get_iter_at_mark (out cursor_location, cursor);
+
+        Gtk.TextIter sentence_start = buffer_start.copy ();
+        Gtk.TextIter sentence_end = buffer_start.copy ();
+        while (sentence_end.forward_sentence_end ()) {
+            string sentence = strip_markdown (source_buffer.get_text (sentence_start, sentence_end, false));
+            if (!cursor_location.in_range (sentence_start, sentence_end)) {
+                if (!grammar_correct_sentence_check (sentence)) {
+                    source_buffer.apply_tag (grammar_error, sentence_start, sentence_end);
+                }
+            }
+            sentence_start = sentence_end;
+        }
+    }
+
+    public bool grammar_correct_sentence_check (string sentence) {
+        bool error_free = false;
+
+        string check_sentence = strip_markdown (sentence).chug ().chomp ();
+        try {
+            string[] command = {
+                "link-parser",
+                "-batch"
+            };
+            Subprocess grammar = new Subprocess.newv (
+                command,
+                SubprocessFlags.STDOUT_PIPE |
+                SubprocessFlags.STDIN_PIPE |
+                SubprocessFlags.STDERR_MERGE);
+
+            var input_stream = grammar.get_stdin_pipe ();
+            if (input_stream != null) {
+                DataOutputStream flush_buffer = new DataOutputStream (input_stream);
+                if (!flush_buffer.put_string (check_sentence)) {
+                    warning ("Could not set buffer");
+                }
+                flush_buffer.flush ();
+                flush_buffer.close ();
+            }
+            var output_stream = grammar.get_stdout_pipe ();
+            grammar.wait ();
+            if (output_stream != null) {
+                var proc_input = new DataInputStream (output_stream);
+                string line = "";
+                while ((line = proc_input.read_line (null)) != null) {
+                    error_free = error_free || line.down ().contains ("0 errors");
+                }
+            }
+        } catch (Error e) {
+            warning ("Could not process output: %s", e.message);
+        }
+        return error_free;
     }
 
     private void find_links () {

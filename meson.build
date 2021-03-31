@@ -2,7 +2,7 @@ project('kmwriter', ['vala', 'c'],
   version: '0.0.1'
 )
 
-example_deps = [ dependency('gtk+-3.0'), dependency('gtksourceview-3.0'), ]
+example_deps = [ dependency('gtk+-3.0'), dependency('gtksourceview-4'), ]
 
 executable(
     'kmwriter',
