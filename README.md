@@ -8,6 +8,15 @@ This repo is just for showing how some of the core stuff in [ThiefMD](https://gi
  - [The Poor Man's Grammar Checker](https://1.6km.me/blog/2021/03/30/the-poor-mans-grammar-checker/) - Covers how we perform grammar checking.
  - [Speeding KMWriter Up](https://1.6km.me/blog/2021/03/31/speeding-kmwriter-up/) - Real time (or non-disruptive) grammar checking.
 
+
+![](link-peek-a-boo.gif)
+
+[Markdown URL Hiding](https://1.6km.me//blog/2021/03/06/playing-with-gtk-texttags/)
+
+![](live-grammar-caching.gif)
+
+[Grammar Checking with Link Grammar](https://1.6km.me/blog/2021/03/30/the-poor-mans-grammar-checker/), [Real-time Grammar Checking](https://1.6km.me/blog/2021/03/31/speeding-kmwriter-up/). Uses [link-grammar](http://www.abisource.com/projects/link-grammar/).
+
 ## Building
 
 ### Ubuntu
