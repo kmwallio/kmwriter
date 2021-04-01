@@ -229,6 +229,14 @@ namespace KMWriter {
                     }
                 }
                 sentence_start = sentence_end;
+
+                // Strip whitespace from start of sentence.
+                while (sentence_start.get_char ().isspace ()) {
+                    if (!sentence_start.forward_char ()) {
+                        break;
+                    }
+                }
+                sentence_end = sentence_start;
             }
 
             start_worker ();
