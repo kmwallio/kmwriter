@@ -12,14 +12,13 @@ namespace KMWriter{
             window.set_default_size (600, 320);
 
             // Scroll view to hold contents
-            var scroll_box = new Gtk.ScrolledWindow (null, null);
+            var scroll_box = new Gtk.ScrolledWindow ();
             // Get a pointer to the Markdown Language
             var manager = Gtk.SourceLanguageManager.get_default ();
             var language = manager.guess_language (null, "text/markdown");
 
             // Create a GtkSourceView and create a markdown buffer
             source_view = new Gtk.SourceView ();
-            source_view.margin = 0;
             source_buffer = new Gtk.SourceBuffer.with_language (language);
             source_buffer.highlight_syntax = true;
             source_view.set_buffer (source_buffer);
@@ -27,7 +26,7 @@ namespace KMWriter{
             // Set placeholder text
             source_buffer.text = "# Hello from 1.6km Writer\nDelete this text and start writing!";
             // Add the GtkSourceView to the Scroll Box
-            scroll_box.add (source_view);
+            scroll_box.set_child (source_view);
 
             // Attach markdown enrichment
             markdown_enrichment = new Markdown ();
@@ -43,8 +42,8 @@ namespace KMWriter{
             });
 
             // Populate the Window
-            window.add (scroll_box);
-            window.show_all ();
+            window.child = scroll_box;
+            window.present ();
         }
 
         public static int main (string[] args) {

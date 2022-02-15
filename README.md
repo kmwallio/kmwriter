@@ -22,13 +22,13 @@ This repo is just for showing how some of the core stuff in [ThiefMD](https://gi
 ### Ubuntu
 
 ```bash
-sudo apt install meson ninja-build valac cmake libgtk-3-dev libgee-0.8-dev libgtksourceview-4-dev link-grammar
+sudo apt install meson ninja-build valac cmake libgtk-4-dev libgee-0.8-dev libgtksourceview-4-dev link-grammar
 ```
 
 ### Fedora
 
 ```bash
-sudo dnf install vala meson ninja-build cmake gtk3-devel gtksourceview4-devel libgee-devel link-grammar
+sudo dnf install vala meson ninja-build cmake gtk4-devel gtksourceview4-devel libgee-devel link-grammar
 ```
 
 ### Building & Running
